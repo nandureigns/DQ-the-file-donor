@@ -34,17 +34,6 @@ from aiohttp import web as webserver
 from sample_info import tempDict
 
 
-async def keep_alive():
-    async with aiohttp.ClientSession() as session:
-        while True:
-            try:
-                await session.get("https://wooden-bobolink-filterbotkn-dc55c182.koyeb.app/")  # Uses the imported URL from info.py
-                logging.info("Working.")
-            except Exception as e:
-                logging.error(f"Error Occurred : {e}")
-            await asyncio.sleep(1)
-            
-
 class Bot(Client):
 
     def __init__(self):
@@ -92,8 +81,7 @@ class Bot(Client):
         time = now.strftime("%H:%M:%S %p")
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
         print("GOKU RESTARTED...!!!")
-        # Start keep-alive task
-        asyncio.create_task(keep_alive())
+        
         client = webserver.AppRunner(await bot_run())
         await client.setup()
         bind_address = "0.0.0.0"
