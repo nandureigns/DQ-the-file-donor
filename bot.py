@@ -1,7 +1,5 @@
 import logging
 import logging.config
-import aiohttp 
-import asyncio
 
 # Get logging configurations
 logging.config.fileConfig('logging.conf')
@@ -17,18 +15,9 @@ from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL, SEC
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
-
-# for prevent stoping the bot after 1 week
-logging.getLogger("asyncio").setLevel(logging.CRITICAL -1)
-
-# peer id invaild fixxx
-from pyrogram import utils as pyroutils
-pyroutils.MIN_CHAT_ID = -999999999999
-pyroutils.MIN_CHANNEL_ID = -100999999999999
-
-from plugins.webcode import bot_run
-from os import environ
-from aiohttp import web as webserver
+from Script import script 
+from datetime import date, datetime 
+import pytz
 from sample_info import tempDict
 
 class Bot(Client):
@@ -39,9 +28,9 @@ class Bot(Client):
             api_id=API_ID,
             api_hash=API_HASH,
             bot_token=BOT_TOKEN,
-            workers=50,
+            workers=200,
             plugins={"root": "plugins"},
-            sleep_threshold=5,
+            sleep_threshold=10,
         )
 
     async def start(self):
@@ -55,7 +44,7 @@ class Bot(Client):
         stats = await clientDB.command('dbStats')
         #calculating the free db space from bytes to MB
         free_dbSize = round(512-((stats['dataSize']/(1024*1024))+(stats['indexSize']/(1024*1024))), 2)
-        if SECONDDB_URI and free_dbSize<10: #if the primary db have less than 10MB left, use second DB.
+        if SECONDDB_URI and free_dbSize<250: #if the primary db have less than 250mb left, use second DB.
             tempDict["indexDB"] = SECONDDB_URI
             logging.info(f"Since Primary DB have only {free_dbSize} MB left, Secondary DB will be used to store datas.")
         elif SECONDDB_URI is None:
@@ -70,20 +59,18 @@ class Bot(Client):
         temp.B_NAME = me.first_name
         self.username = '@' + me.username
         logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
-       # logging.info(LOG_STR)
-        await self.send_message(chat_id=LOG_CHANNEL,text="RESTARTED...!!!")
-        
-
-        
-        client = webserver.AppRunner(await bot_run())
-        await client.setup()
-        bind_address = "0.0.0.0"
-        await webserver.TCPSite(client, bind_address, 8080).start()
+        logging.info(LOG_STR)
+        logging.info(script.LOGO)
+        tz = pytz.timezone('Asia/Kolkata')
+        today = date.today()
+        now = datetime.now(tz)
+        time = now.strftime("%H:%M:%S %p")
+        await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
 
     async def stop(self, *args):
         await super().stop()
-        logging.info("Bot stopped. Bye")
-    
+        logging.info("Bot stopped. Bye.")
+
     async def iter_messages(
         self,
         chat_id: Union[int, str],
